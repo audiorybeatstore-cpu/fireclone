@@ -1,1 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FireClone Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#0f111a] text-gray-100 font-sans h-screen flex overflow-hidden">
 
+    <aside class="w-64 bg-[#161925] border-r border-gray-800 flex flex-col justify-between hidden md:flex">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-gray-800 gap-2">
+                <div class="bg-orange-500 p-1.5 rounded-lg text-black font-bold text-sm">⚡</div>
+                <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">FireClone</span>
+                <span class="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">v1.0</span>
+            </div>
+
+            <div class="px-4 py-3 border-b border-gray-800">
+                <div class="flex items-center justify-between p-2 rounded-lg bg-[#1e2235]">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 uppercase">Current Project</span>
+                        <span class="text-sm font-medium text-white">Production-App-1</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <button onclick="switchTab('overview')" id="btn-overview" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-[#1e2235] hover:text-gray-200 transition">
+                    📊 Project Overview
+                </button>
+                <button onclick="switchTab('database')" id="btn-database" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 text-orange-400 border-l-2 border-orange-500 pl-2.5 transition">
+                    🗄️ Database
+                </button>
+                <button onclick="switchTab('storage')" id="btn-storage" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-[#1e2235] hover:text-gray-200 transition">
+                    📁 Storage
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-gray-800 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-bold text-sm text-black">U</div>
+            <div class="flex flex-col min-w-0">
+                <span class="text-sm font-medium truncate">Dev User</span>
+                <span class="text-xs text-gray-500 truncate">dev@fireclone.io</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-[#161925]/50 backdrop-blur-md">
+            <h1 id="panel-title" class="text-xl font-semibold capitalize">Database Panel</h1>
+            
+            <div class="flex items-center gap-2 bg-[#161925] border border-gray-800 px-3 py-1.5 rounded-lg text-xs">
+                <span class="text-gray-400">API Key:</span>
+                <code id="api-key-text" class="bg-black/30 px-1.5 py-0.5 rounded text-amber-300 font-mono">••••••••••••••••</code>
+                <button onclick="toggleApiKey()" class="text-gray-400 hover:text-white ml-1 underline cursor-pointer">Reveal</button>
+            </div>
+        </header>
+
+        <div class="p-8 max-w-7xl w-full mx-auto space-y-6">
+            
+            <div id="view-database" class="tab-view space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
+                        <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Reads</p>
+                        <p class="text-2xl font-bold text-white mt-1">1.2M <span class="text-xs text-emerald-400 font-normal">/ 5M free</span></p>
+                    </div>
+                    <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
+                        <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Writes</p>
+                        <p class="text-2xl font-bold text-white mt-1">432,891</p>
+                    </div>
+                    <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
+                        <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Storage Used</p>
+                        <p class="text-2xl font-bold text-white mt-1">142.6 MB</p>
+                    </div>
+                </div>
+
+                <div class="bg-[#161925] rounded-xl border border-gray-800 overflow-hidden">
+                    <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#1c1f2f]">
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-semibold text-gray-300">Collection:</span>
+                            <select class="bg-[#0f111a] border border-gray-700 rounded px-2 py-1 text-xs text-orange-400 font-mono">
+                                <option>users_profile</option>
+                                <option>posts</option>
+                            </select>
+                        </div>
+                        <button class="bg-orange-500 hover:bg-orange-600 text-black text-xs font-semibold px-3 py-1.5 rounded transition">+ Add Row</button>
+                    </div>
+                    <div class="overflow-x-auto font-mono text-xs">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-[#0f111a] text-gray-400 border-b border-gray-800">
+                                    <th class="p-3 border-r border-gray-800">id (UUID)</th>
+                                    <th class="p-3 border-r border-gray-800">username (string)</th>
+                                    <th class="p-3 border-r border-gray-800">is_premium (boolean)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-300 divide-y divide-gray-800">
+                                <tr class="hover:bg-[#1e2235]/40">
+                                    <td class="p-3 border-r border-gray-800 text-gray-500">8f3b-410a-991c</td>
+                                    <td class="p-3 border-r border-gray-800 text-emerald-400">"alex_dev"</td>
+                                    <td class="p-3 border-r border-gray-800 text-purple-400">true</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-generic" class="tab-view hidden bg-[#161925] p-12 rounded-xl border border-gray-800 text-center space-y-3">
+                <h3 class="text-lg font-medium text-white">Engine Panel Ready</h3>
+                <p class="text-sm text-gray-400 max-w-md mx-auto">This engine panel is ready to be connected to live cloud microservices.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
