@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // 🚨 PASTE YOUR MONGODB ATLAS CONNECTION STRING HERE
-const MONGO_URI = "YOUR_MONGODB_CONNECTION_STRING";
+const MONGO_URI = "mongodb+srv://fireclone:ZahraIsmael20!@fireclone.d0a3uou.mongodb.net/?appName=Fireclone";
 
 // Connect directly to the Cloud MongoDB Cluster
 mongoose.connect(MONGO_URI)
