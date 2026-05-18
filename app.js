@@ -17,7 +17,20 @@ function toggleApiKey() {
     }
 }
 
-// NEW FEATURE: Fetch real data from our live Node.js engine!
+// NEW FEATURE: Fetch system analytics values from our Node.js endpoint
+async function loadProjectAnalytics() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/v1/analytics`);
+        const stats = await response.json();
+        
+        document.getElementById('stat-requests').innerText = stats.totalRequests;
+        document.getElementById('stat-uptime').innerText = stats.uptime;
+    } catch (error) {
+        console.error("Analytics sync error:", error);
+    }
+}
+
+// Fetch real data from our live Node.js engine!
 async function loadCollectionData(collectionName) {
     const tbody = document.querySelector('tbody');
     tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500 animate-pulse">Loading data from Node.js engine...</td></tr>`;
@@ -49,7 +62,7 @@ async function loadCollectionData(collectionName) {
     }
 }
 
-// NEW FEATURE: Send data to our live Node.js engine!
+// Send data to our live Node.js engine!
 async function addNewRow() {
     const currentCollection = document.querySelector('select').value;
     const randomUsernames = ["cyber_ninja", "code_wizard", "giga_dev", "alpha_tester", "stack_overlord"];
@@ -79,15 +92,24 @@ async function addNewRow() {
 
 function switchTab(tabId) {
     document.getElementById('panel-title').innerText = tabId + " Panel";
+    
     const dbView = document.getElementById('view-database');
+    const overviewView = document.getElementById('view-overview');
     const genericView = document.getElementById('view-generic');
 
+    // Hide everything initially
+    dbView.classList.add('hidden');
+    overviewView.classList.add('hidden');
+    genericView.classList.add('hidden');
+
+    // Show selected panel components
     if (tabId === 'database') {
         dbView.classList.remove('hidden');
-        genericView.classList.add('hidden');
         loadCollectionData(document.querySelector('select').value);
+    } else if (tabId === 'overview') {
+        overviewView.classList.remove('hidden');
+        loadProjectAnalytics(); // Load live server health data
     } else {
-        dbView.classList.add('hidden');
         genericView.classList.remove('hidden');
     }
 
@@ -103,12 +125,10 @@ function switchTab(tabId) {
 
 // Setup Event Listeners once the page loads
 document.addEventListener("DOMContentLoaded", () => {
-    // Connect "+ Add Row" button to our new function
-    const addRowBtn = document.querySelector('button[onclick=""]'); 
     // Fix inline click handlers
     document.querySelector('button.bg-orange-500').setAttribute('onclick', 'addNewRow()');
     document.querySelector('select').setAttribute('onchange', 'loadCollectionData(this.value)');
     
-    // Initial data load
-    loadCollectionData('users_profile');
+    // Warm up/initial telemetry load on startup
+    loadProjectAnalytics();
 });
