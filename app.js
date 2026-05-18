@@ -1,7 +1,7 @@
 let apiKeyVisible = false;
 const realApiKey = "fc_live_7x92n3k9s82j1a";
 // 🚨 PASTE YOUR RENDER URL HERE (Make sure it ends WITHOUT a slash /)
-const BACKEND_URL = "YOUR_RENDER_BACKEND_URL"; 
+const BACKEND_URL = "https://fireclone.onrender.com"; 
 
 function toggleApiKey() {
     const keyElement = document.getElementById('api-key-text');
