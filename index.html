@@ -61,6 +61,33 @@
 
         <div class="p-8 max-w-7xl w-full mx-auto space-y-6">
             
+            <div id="view-overview" class="tab-view hidden space-y-6">
+                <div class="bg-[#161925] p-6 rounded-xl border border-gray-800">
+                    <h2 class="text-lg font-semibold text-white mb-2">Live Cloud Project Status</h2>
+                    <p class="text-sm text-gray-400">Real-time health telemetry from your active Node.js server engine instances.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-[#161925] p-5 rounded-xl border border-gray-800 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-semibold">API Traffic Server Loads</p>
+                            <p id="stat-requests" class="text-3xl font-bold text-orange-400 mt-1 font-mono">0</p>
+                        </div>
+                        <div class="text-xs bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-1 rounded">Total Hits</div>
+                    </div>
+
+                    <div class="bg-[#161925] p-5 rounded-xl border border-gray-800 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-semibold">Instance Uptime</p>
+                            <p id="stat-uptime" class="text-3xl font-bold text-white mt-1 font-mono">0m</p>
+                        </div>
+                        <div class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Operational
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div id="view-database" class="tab-view space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
@@ -111,7 +138,7 @@
 
             <div id="view-generic" class="tab-view hidden bg-[#161925] p-12 rounded-xl border border-gray-800 text-center space-y-3">
                 <h3 class="text-lg font-medium text-white">Engine Panel Ready</h3>
-                <p class="text-sm text-gray-400 max-w-md mx-auto">This engine panel is ready to be connected to live cloud microservices.</p>
+                <p class="text-sm text-gray-400 max-w-md mx-auto">This sub-component is ready to be mapped to a dedicated storage microservice micro-layer.</p>
             </div>
 
         </div>
