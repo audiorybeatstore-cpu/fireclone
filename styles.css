@@ -1,0 +1,7 @@
+/* Custom transitions for a premium dashboard feel */
+.tab-btn {
+    transition: all 0.2s ease-in-out;
+}
+body {
+    background-color: #0f111a;
+}
