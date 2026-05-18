@@ -3,11 +3,18 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS so our frontend dashboard can talk to this backend
+// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
 
-// Mock database in memory (Temporary, we will connect a real database later!)
+// Track server statistics
+let serverStats = {
+    totalRequests: 0,
+    startTime: Date.now(),
+    status: "Healthy"
+};
+
+// Mock database storage
 let mockCollections = {
     users_profile: [
         { id: "8f3b-410a-991c", username: "alex_dev", is_premium: true },
@@ -16,9 +23,23 @@ let mockCollections = {
     posts: []
 };
 
-// Route 1: Test route to see if backend is alive
-app.get('/', (req, res) => {
-    res.json({ status: "FireClone Backend Engine is running smoothly!" });
+// MIDDLEWARE: Count every single request hitting this backend
+app.use((req, res, next) => {
+    serverStats.totalRequests++;
+    next();
+});
+
+// Route 1: Get backend system and analytics stats
+app.get('/api/v1/analytics', (req, res) => {
+    // Calculate server uptime in minutes
+    const uptimeMinutes = Math.floor((Date.now() - serverStats.startTime) / 60000);
+    
+    res.json({
+        totalRequests: serverStats.totalRequests,
+        uptime: `${uptimeMinutes}m`,
+        status: serverStats.status,
+        databaseSize: `${JSON.stringify(mockCollections).length} bytes`
+    });
 });
 
 // Route 2: Get all data for a specific database collection
@@ -31,7 +52,7 @@ app.get('/api/v1/database/:collection', (req, res) => {
     }
 });
 
-// Route 3: Add a new row/record to a collection (Like Firestore's addDoc)
+// Route 3: Add a new row/record to a collection
 app.post('/api/v1/database/:collection', (req, res) => {
     const collectionName = req.params.collection;
     const newData = req.body;
@@ -40,7 +61,6 @@ app.post('/api/v1/database/:collection', (req, res) => {
         mockCollections[collectionName] = [];
     }
     
-    // Generate a quick fake ID
     const newId = Math.random().toString(36).substring(2, 11);
     const savedRecord = { id: newId, ...newData };
     
