@@ -124,8 +124,7 @@
                                     <th class="p-3 border-r border-gray-800">is_premium (boolean)</th>
                                 </tr>
                             </thead>
-                            <tbody id="database-table-body" class="text-gray-300 divide-y divide-gray-800">
-                                </tbody>
+                            <tbody id="database-table-body" class="text-gray-300 divide-y divide-gray-800"></tbody>
                         </table>
                     </div>
                 </div>
@@ -135,11 +134,14 @@
                 <div class="bg-[#161925] p-6 rounded-xl border border-gray-800 flex justify-between items-center">
                     <div>
                         <h2 class="text-lg font-semibold text-white mb-1">File Storage Buckets</h2>
-                        <p class="text-sm text-gray-400">Upload, analyze, and manage files system binary content structures.</p>
+                        <p class="text-sm text-gray-400">Upload, analyze, and manage file system binary content structures.</p>
                     </div>
-                    <button onclick="uploadStorageFile()" class="bg-orange-500 hover:bg-orange-600 text-black text-xs font-semibold px-4 py-2 rounded transition">
-                        📤 Upload Fake File
-                    </button>
+                    <div>
+                        <input type="file" id="real-file-picker" onchange="handleRealFileUpload(this)" class="hidden">
+                        <button onclick="document.getElementById('real-file-picker').click()" class="bg-orange-500 hover:bg-orange-600 text-black text-xs font-semibold px-4 py-2 rounded transition hover:cursor-pointer">
+                            📤 Upload Real File
+                        </button>
+                    </div>
                 </div>
 
                 <div class="bg-[#161925] rounded-xl border border-gray-800 overflow-hidden">
@@ -154,8 +156,7 @@
                                     <th class="p-3 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="storage-table-body" class="text-gray-300 divide-y divide-gray-800">
-                                </tbody>
+                            <tbody id="storage-table-body" class="text-gray-300 divide-y divide-gray-800"></tbody>
                         </table>
                     </div>
                 </div>
