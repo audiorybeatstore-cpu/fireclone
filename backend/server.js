@@ -152,7 +152,7 @@ app.post('/api/v1/database/:collection', async (req, res) => {
 });
 
 // --- SECURED STORAGE ROUTES (Added authenticateToken) ---
-app.get('/api/v1/storage', authenticateToken, async (req, res) => {
+app.get('/api/v1/storage', async (req, res) => {
     try {
         const files = await StorageFile.find();
         res.json(files.map(f => ({ id: f._id, name: f.name, type: f.type, size: f.size, url: f.url })));
@@ -161,7 +161,7 @@ app.get('/api/v1/storage', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/v1/storage/upload', authenticateToken, upload.single('fileAsset'), async (req, res) => {
+app.post('/api/v1/storage/upload', upload.single('fileAsset'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No physical file received." });
         const sizeInMb = (req.file.size / (1024 * 1024)).toFixed(2);
