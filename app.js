@@ -47,7 +47,6 @@ async function loadCollectionData(collectionName) {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-[#1e2235]/40 border-b border-gray-800";
             
-            // Accommodate both standard id and MongoDB style _id properties
             const displayId = row.id || row._id || "N/A";
             
             tr.innerHTML = `
@@ -82,7 +81,6 @@ async function addNewRow() {
             return;
         }
         
-        // Refresh table view automatically upon success transaction
         loadCollectionData(currentCollection);
     } catch (error) {
         console.error("Add row network failure:", error);
@@ -90,7 +88,7 @@ async function addNewRow() {
     }
 }
 
-// --- STORAGE CODE ---
+// --- REAL STORAGE COMPONENT OPERATIONS ---
 async function loadStorageData() {
     const tbody = document.getElementById('storage-table-body');
     if (!tbody) return;
@@ -102,7 +100,7 @@ async function loadStorageData() {
         tbody.innerHTML = '';
 
         if (!files || files.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-500">No assets in storage bucket. Click "Upload Fake File" to inject metrics.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-500">No assets in storage bucket. Select a real file to upload.</td></tr>`;
             return;
         }
 
@@ -112,7 +110,9 @@ async function loadStorageData() {
             tr.className = "hover:bg-[#1e2235]/40 border-b border-gray-800";
             tr.innerHTML = `
                 <td class="p-3 border-r border-gray-800 text-gray-500 font-mono">${displayFileId}</td>
-                <td class="p-3 border-r border-gray-800 text-amber-200 font-medium">${file.name}</td>
+                <td class="p-3 border-r border-gray-800 text-amber-200 font-medium">
+                    <a href="${file.url}" target="_blank" class="hover:underline text-orange-400 flex items-center gap-1">🔗 ${file.name}</a>
+                </td>
                 <td class="p-3 border-r border-gray-800 text-blue-400 select-all">${file.type}</td>
                 <td class="p-3 border-r border-gray-800 font-semibold text-gray-400">${file.size}</td>
                 <td class="p-3 text-center">
@@ -126,24 +126,32 @@ async function loadStorageData() {
     }
 }
 
-async function uploadStorageFile() {
-    const fakeFiles = [
-        { name: "profile_song_raw.mp3", type: "audio/mpeg", size: "4.2 MB" },
-        { name: "index_hero_graphic.svg", type: "image/svg+xml", size: "18 KB" },
-        { name: "user_database_backup.json", type: "application/json", size: "841 KB" },
-        { name: "promo_video_compressed.mp4", type: "video/mp4", size: "24.8 MB" }
-    ];
-    const pickedFile = fakeFiles[Math.floor(Math.random() * fakeFiles.length)];
+async function handleRealFileUpload(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+
+    const tbody = document.getElementById('storage-table-body');
+    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-orange-400 animate-pulse">Uploading binary blocks directly to Render engine...</td></tr>`;
+
+    const formData = new FormData();
+    formData.append('fileAsset', file);
 
     try {
-        await fetch(`${BACKEND_URL}/api/v1/storage`, {
+        const response = await fetch(`${BACKEND_URL}/api/v1/storage/upload`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pickedFile)
+            body: formData
         });
+
+        if (!response.ok) {
+            alert("Upload failed at server layer.");
+        }
+        
+        inputElement.value = '';
         loadStorageData();
     } catch (error) {
-        alert("Upload network transaction error.");
+        console.error("File upload crash:", error);
+        alert("Network file transmission dropped.");
+        loadStorageData();
     }
 }
 
@@ -191,9 +199,9 @@ function switchTab(tabId) {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelector('select').setAttribute('onchange', 'loadCollectionData(this.value)');
-    // Explicitly make sure the button click handler maps to our function context
     const addRowBtn = document.querySelector('button.bg-orange-500');
     if (addRowBtn) addRowBtn.setAttribute('onclick', 'addNewRow()');
 
+    loadProjectAnalytics();
     loadCollectionData('users_profile');
 });
