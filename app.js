@@ -27,9 +27,9 @@ function getAuthHeaders(contentType = 'application/json') {
 
 // --- SECURE SYSTEM AUTH CONTROL PIPELINES ---
 async function executeAdminRegistration() {
-    const userPrompt = prompt("Define a master username credentials admin account name:");
+    const userPrompt = prompt("Define account credentials username identifier name:");
     if (!userPrompt) return;
-    const passPrompt = prompt("Define a strong operational access password token:");
+    const passPrompt = prompt("Define account strong security operational access password:");
     if (!passPrompt) return;
 
     try {
@@ -40,7 +40,7 @@ async function executeAdminRegistration() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        alert("Success! System Admin baseline registered. Log in now.");
+        alert("Success! System User account registered. Log in now.");
     } catch (err) {
         alert(`Setup crash error event: ${err.message}`);
     }
@@ -59,7 +59,7 @@ async function executeLoginRequest() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        // Store secure session signature token on user machine browser context
+        // Store secure signature token inside local storage context
         localStorage.setItem('fc_admin_token', data.token);
         localStorage.setItem('fc_admin_user', userInp);
         
@@ -139,7 +139,7 @@ async function loadCollectionData(collectionName) {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">Error connecting to secured database.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">Error connecting to secured database layer.</td></tr>`;
     }
 }
 
@@ -159,7 +159,7 @@ async function addNewRow() {
         if (!response.ok) throw new Error("Failed validation transaction payload");
         loadCollectionData(currentCollection);
     } catch (error) {
-        alert("Security operation rejection event logged.");
+        alert("Security operation rejection event logged. Relog session.");
     }
 }
 
@@ -171,6 +171,12 @@ async function loadStorageData() {
 
     try {
         const response = await fetch(`${BACKEND_URL}/api/v1/storage`, { headers: getAuthHeaders() });
+        
+        if (response.status === 401 || response.status === 403) {
+            executeLogoutWorkflow();
+            return;
+        }
+
         const files = await response.json();
         tbody.innerHTML = '';
 
@@ -222,17 +228,21 @@ async function handleRealFileUpload(inputElement) {
         inputElement.value = '';
         loadStorageData();
     } catch (error) {
-        alert("Upload transmission dropped by firewall policies.");
+        alert("Upload transmission dropped by user authorization policies.");
         loadStorageData();
     }
 }
 
 async function deleteStorageFile(id) {
     try {
-        await fetch(`${BACKEND_URL}/api/v1/storage/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+        const response = await fetch(`${BACKEND_URL}/api/v1/storage/${id}`, { 
+            method: 'DELETE', 
+            headers: getAuthHeaders() 
+        });
+        if(!response.ok) throw new Error();
         loadStorageData();
     } catch (error) {
-        alert("Deletion authentication reject.");
+        alert("Deletion authentication rejection.");
     }
 }
 
@@ -276,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadProjectAnalytics();
 
-    // Check if user has an existing active session on boot load
     if (localStorage.getItem('fc_admin_token')) {
         initializeWorkspaceSession();
     }
