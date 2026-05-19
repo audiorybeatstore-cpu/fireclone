@@ -38,7 +38,7 @@ async function loadCollectionData(collectionName) {
         const data = await response.json();
         tbody.innerHTML = '';
         
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500">Collection is empty. Click "+ Add Row" to test!</td></tr>`;
             return;
         }
@@ -46,14 +46,19 @@ async function loadCollectionData(collectionName) {
         data.forEach(row => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-[#1e2235]/40 border-b border-gray-800";
+            
+            // Accommodate both standard id and MongoDB style _id properties
+            const displayId = row.id || row._id || "N/A";
+            
             tr.innerHTML = `
-                <td class="p-3 border-r border-gray-800 text-gray-500">${row.id}</td>
+                <td class="p-3 border-r border-gray-800 text-gray-500">${displayId}</td>
                 <td class="p-3 border-r border-gray-800 text-emerald-400">"${row.username || 'N/A'}"</td>
                 <td class="p-3 border-r border-gray-800 text-purple-400">${row.is_premium !== undefined ? row.is_premium : 'false'}</td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
+        console.error("Error displaying table collections:", error);
         tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">Error connecting to backend server.</td></tr>`;
     }
 }
@@ -65,18 +70,27 @@ async function addNewRow() {
     const randomPremium = Math.random() < 0.5;
 
     try {
-        await fetch(`${BACKEND_URL}/api/v1/database/${currentCollection}`, {
+        const response = await fetch(`${BACKEND_URL}/api/v1/database/${currentCollection}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: randomUsername, is_premium: randomPremium })
         });
+        
+        if (!response.ok) {
+            const errorResult = await response.json();
+            alert(`Server Error: ${errorResult.error || "Failed to save record"}`);
+            return;
+        }
+        
+        // Refresh table view automatically upon success transaction
         loadCollectionData(currentCollection);
     } catch (error) {
-        alert("Failed to add data to backend.");
+        console.error("Add row network failure:", error);
+        alert("Failed to add data to backend. Check network connectivity.");
     }
 }
 
-// --- NEW STORAGE CODE ---
+// --- STORAGE CODE ---
 async function loadStorageData() {
     const tbody = document.getElementById('storage-table-body');
     if (!tbody) return;
@@ -87,21 +101,22 @@ async function loadStorageData() {
         const files = await response.json();
         tbody.innerHTML = '';
 
-        if (files.length === 0) {
+        if (!files || files.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-500">No assets in storage bucket. Click "Upload Fake File" to inject metrics.</td></tr>`;
             return;
         }
 
         files.forEach(file => {
+            const displayFileId = file.id || file._id || "N/A";
             const tr = document.createElement('tr');
             tr.className = "hover:bg-[#1e2235]/40 border-b border-gray-800";
             tr.innerHTML = `
-                <td class="p-3 border-r border-gray-800 text-gray-500 font-mono">${file.id}</td>
+                <td class="p-3 border-r border-gray-800 text-gray-500 font-mono">${displayFileId}</td>
                 <td class="p-3 border-r border-gray-800 text-amber-200 font-medium">${file.name}</td>
                 <td class="p-3 border-r border-gray-800 text-blue-400 select-all">${file.type}</td>
                 <td class="p-3 border-r border-gray-800 font-semibold text-gray-400">${file.size}</td>
                 <td class="p-3 text-center">
-                    <button onclick="deleteStorageFile('${file.id}')" class="text-red-400 hover:text-red-500 underline hover:cursor-pointer transition">Delete</button>
+                    <button onclick="deleteStorageFile('${displayFileId}')" class="text-red-400 hover:text-red-500 underline hover:cursor-pointer transition">Delete</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -161,7 +176,7 @@ function switchTab(tabId) {
         loadProjectAnalytics();
     } else if (tabId === 'storage') {
         storageView.classList.remove('hidden');
-        loadStorageData(); // Fire storage cluster refresh fetch
+        loadStorageData();
     }
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -176,5 +191,9 @@ function switchTab(tabId) {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelector('select').setAttribute('onchange', 'loadCollectionData(this.value)');
-    loadProjectAnalytics();
+    // Explicitly make sure the button click handler maps to our function context
+    const addRowBtn = document.querySelector('button.bg-orange-500');
+    if (addRowBtn) addRowBtn.setAttribute('onclick', 'addNewRow()');
+
+    loadCollectionData('users_profile');
 });
