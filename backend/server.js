@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security JWT Token Secret Key Phrase
-const JWT_SECRET = "fireclone_super_crypto_secret_key_99x!";
+const JWT_SECRET = process.env.JWT_SECRET || "fireclone_super_crypto_secret_key_99x!";
 
 // Permanent Cloud Mongo Cluster URI Connection
 const MONGO_URI = "mongodb+srv://fireclone:ZahraIsmael20!@fireclone.d0a3uou.mongodb.net/?appName=Fireclone";
@@ -36,10 +36,10 @@ const upload = multer({ storage: storageConfig });
 
 app.use('/uploads', express.static(uploadDir));
 
-// --- REAL-TIME DATA SCHEMAS ---
+// --- REAL-TIME DATA SCHEMAS (MULTI-USER ISOLATION UPGRADE) ---
 let serverStats = { totalRequests: 0, startTime: Date.now(), status: "Healthy" };
 
-// User Authentication Account Schema
+// 1. Core Platform Users Schema
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true }
@@ -47,12 +47,21 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema);
 
+// 2. DataRows Schema linked directly to the owning creator
 const DataRow = mongoose.model('DataRow', new mongoose.Schema({
-    collectionName: String, username: String, is_premium: Boolean
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    collectionName: String, 
+    username: String, 
+    is_premium: Boolean
 }, { timestamps: true }));
 
+// 3. Storage Files bucket mappings linked to the uploader
 const StorageFile = mongoose.model('StorageFile', new mongoose.Schema({
-    name: String, type: String, size: String, url: String
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: String, 
+    type: String, 
+    size: String, 
+    url: String
 }, { timestamps: true }));
 
 // GLOBAL TRAFFIC TRACKING
@@ -61,7 +70,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// AUTHENTICATION MIDDLEWARE SHIELD (Secures private endpoints)
+// AUTHENTICATION MIDDLEWARE SHIELD (Extracts & Validates active session keys)
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -72,14 +81,14 @@ const authenticateToken = (req, res, next) => {
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) {
-            return res.status(403).json({ error: "Invalid token validation signature." });
+            return res.status(403).json({ error: "Session expired or invalid signature token." });
         }
-        req.user = user;
+        req.user = user; // Contains id and username of the request emitter
         next();
     });
 };
 
-// --- AUTHENTICATION REGISTRATION & LOGIN ENDPOINTS ---
+// --- AUTHENTICATION PIPELINES ---
 app.post('/api/v1/auth/register', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -88,13 +97,12 @@ app.post('/api/v1/auth/register', async (req, res) => {
         const existingUser = await User.findOne({ username });
         if (existingUser) return res.status(400).json({ error: "User profile identifier already taken." });
 
-        // Hash password cleanly before saving
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = new User({ username, password: hashedPassword });
         await newUser.save();
-        res.status(201).json({ message: "Admin account registered safely!" });
+        res.status(201).json({ message: "Account registered safely!" });
     } catch (error) {
         res.status(500).json({ error: "Registration execution dropped." });
     }
@@ -109,7 +117,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).json({ error: "Security decryption password mismatch." });
 
-        // Grant access token that expires in 12 hours
+        // Generate token encoding the unique database user ID 
         const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '12h' });
         res.json({ token, message: "Authentication validation successful." });
     } catch (error) {
@@ -117,7 +125,6 @@ app.post('/api/v1/auth/login', async (req, res) => {
     }
 });
 
-// Analytics can remain public for dashboard check-ins
 app.get('/api/v1/analytics', async (req, res) => {
     const uptimeMinutes = Math.floor((Date.now() - serverStats.startTime) / 60000);
     const dbCount = await DataRow.countDocuments();
@@ -125,50 +132,63 @@ app.get('/api/v1/analytics', async (req, res) => {
         totalRequests: serverStats.totalRequests,
         uptime: `${uptimeMinutes}m`,
         status: serverStats.status,
-        databaseSize: `${dbCount} records stored permanently`
+        databaseSize: `${dbCount} records stored globally`
     });
 });
 
-// --- SECURED DATABASE ROUTES (Added authenticateToken) ---
-app.get('/api/v1/database/:collection', async (req, res) => {
+// --- SECURED ISOLATED DATA LAYER ROUTES ---
+app.get('/api/v1/database/:collection', authenticateToken, async (req, res) => {
     try {
-        const records = await DataRow.find({ collectionName: req.params.collection });
+        // Query database documents matching collection name AND belonging ONLY to the current user
+        const records = await DataRow.find({ 
+            collectionName: req.params.collection,
+            userId: req.user.id 
+        });
         res.json(records.map(rec => ({ id: rec._id, username: rec.username, is_premium: rec.is_premium })));
     } catch (error) {
         res.status(500).json({ error: "Cloud database fetch drop." });
     }
 });
 
-app.post('/api/v1/database/:collection', async (req, res) => {
+app.post('/api/v1/database/:collection', authenticateToken, async (req, res) => {
     try {
         const newRecord = new DataRow({
-            collectionName: req.params.collection, username: req.body.username, is_premium: req.body.is_premium
+            userId: req.user.id, // Links creation transaction directly to user account
+            collectionName: req.params.collection, 
+            username: req.body.username, 
+            is_premium: req.body.is_premium
         });
         await newRecord.save();
-        res.status(201).json({ message: "Saved to cloud storage cluster!", id: newRecord._id });
+        res.status(201).json({ message: "Saved to secure collection storage cluster!", id: newRecord._id });
     } catch (error) {
         res.status(500).json({ error: "Failed to save document record." });
     }
 });
 
-// --- SECURED STORAGE ROUTES (Added authenticateToken) ---
-app.get('/api/v1/storage', async (req, res) => {
+// --- SECURED ISOLATED STORAGE LAYER ROUTES ---
+app.get('/api/v1/storage', authenticateToken, async (req, res) => {
     try {
-        const files = await StorageFile.find();
+        // Fetch files belonging exclusively to the validated sender
+        const files = await StorageFile.find({ userId: req.user.id });
         res.json(files.map(f => ({ id: f._id, name: f.name, type: f.type, size: f.size, url: f.url })));
     } catch (error) {
         res.status(500).json({ error: "Bucket mapping query error." });
     }
 });
 
-app.post('/api/v1/storage/upload', upload.single('fileAsset'), async (req, res) => {
+app.post('/api/v1/storage/upload', authenticateToken, upload.single('fileAsset'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: "No physical file received." });
         const sizeInMb = (req.file.size / (1024 * 1024)).toFixed(2);
         const displaySize = sizeInMb > 1.0 ? `${sizeInMb} MB` : `${(req.file.size / 1024).toFixed(1)} KB`;
         const hostUrl = req.protocol + '://' + req.get('host');
+        
         const fileRecord = new StorageFile({
-            name: req.file.originalname, type: req.file.mimetype, size: displaySize, url: `${hostUrl}/uploads/${req.file.filename}`
+            userId: req.user.id,
+            name: req.file.originalname, 
+            type: req.file.mimetype, 
+            size: displaySize, 
+            url: `${hostUrl}/uploads/${req.file.filename}`
         });
         await fileRecord.save();
         res.status(201).json(fileRecord);
@@ -179,8 +199,11 @@ app.post('/api/v1/storage/upload', upload.single('fileAsset'), async (req, res) 
 
 app.delete('/api/v1/storage/:id', authenticateToken, async (req, res) => {
     try {
-        const fileData = await StorageFile.findById(req.params.id);
-        if (fileData && fileData.url) {
+        // Verify ownership first before removing server objects
+        const fileData = await StorageFile.findOne({ _id: req.params.id, userId: req.user.id });
+        if (!fileData) return res.status(404).json({ error: "Object asset mapping context missing." });
+
+        if (fileData.url) {
             const filename = fileData.url.split('/uploads/')[1];
             const physicalPath = path.join(uploadDir, filename);
             if (fs.existsSync(physicalPath)) fs.unlinkSync(physicalPath);
@@ -193,5 +216,5 @@ app.delete('/api/v1/storage/:id', authenticateToken, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Auth Protected Backend engine running on port ${PORT}`);
+    console.log(`Auth Protected Multi-User Backend engine running on port ${PORT}`);
 });
