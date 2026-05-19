@@ -14,16 +14,16 @@
             <div class="text-center space-y-2">
                 <div class="inline-block bg-orange-500 p-2.5 rounded-xl text-black font-bold text-lg mb-1">🔐</div>
                 <h2 class="text-xl font-bold text-white tracking-tight">FireClone Core Shield</h2>
-                <p class="text-xs text-gray-400">Authenticate console access permissions to production workspace files.</p>
+                <p class="text-xs text-gray-400">Authenticate console access permissions to isolated project workspaces.</p>
             </div>
             
             <div class="space-y-4">
                 <div>
                     <label class="block text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Console Username</label>
-                    <input type="text" id="auth-username" placeholder="admin" class="w-full bg-[#0f111a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition font-mono">
+                    <input type="text" id="auth-username" placeholder="Enter username" class="w-full bg-[#0f111a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition font-mono">
                 </div>
                 <div>
-                    <label class="block text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Master Token Passkey</label>
+                    <label class="block text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Account Passkey</label>
                     <input type="password" id="auth-password" placeholder="••••••••••••" class="w-full bg-[#0f111a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition font-mono">
                 </div>
                 <button onclick="executeLoginRequest()" class="w-full bg-orange-500 hover:bg-orange-600 text-black text-sm font-bold py-2.5 rounded-lg transition active:scale-[0.99] cursor-pointer">
@@ -33,7 +33,7 @@
 
             <div class="text-center">
                 <button onclick="executeAdminRegistration()" class="text-[11px] text-gray-500 hover:text-gray-400 underline transition cursor-pointer">
-                    Initialize Fresh Admin Record Account On Cluster
+                    Create a Fresh Developer Account On Cluster
                 </button>
             </div>
         </div>
@@ -52,8 +52,8 @@
                 <div class="px-4 py-3 border-b border-gray-800">
                     <div class="flex items-center justify-between p-2 rounded-lg bg-[#1e2235]">
                         <div class="flex flex-col">
-                            <span class="text-[10px] text-gray-400 uppercase">Current Project</span>
-                            <span class="text-sm font-medium text-white">Production-App-1</span>
+                            <span class="text-[10px] text-gray-400 uppercase">Current Cloud Project</span>
+                            <span class="text-sm font-medium text-white">Isolated-Node-SaaS</span>
                         </div>
                     </div>
                 </div>
@@ -63,10 +63,10 @@
                         📊 Project Overview
                     </button>
                     <button onclick="switchTab('database')" id="btn-database" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-[#1e2235] hover:text-gray-200 transition">
-                        🗄️ Database
+                        🗄️ Isolated Database
                     </button>
                     <button onclick="switchTab('storage')" id="btn-storage" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-[#1e2235] hover:text-gray-200 transition">
-                        📁 Storage
+                        📁 Private Storage
                     </button>
                 </nav>
             </div>
@@ -76,11 +76,11 @@
                     <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-bold text-sm text-black">U</div>
                     <div class="flex flex-col min-w-0">
                         <span id="display-user-profile" class="text-sm font-medium truncate">Dev User</span>
-                        <span class="text-xs text-gray-500 truncate">Root Administrator</span>
+                        <span class="text-xs text-gray-500 truncate">SaaS Platform Account</span>
                     </div>
                 </div>
                 <button onclick="executeLogoutWorkflow()" class="w-full border border-gray-800 hover:bg-red-500/10 text-xs text-red-400 font-semibold py-1.5 rounded transition cursor-pointer">
-                    🚪 Flush Terminal Token
+                    🚪 Clear Local Auth Token
                 </button>
             </div>
         </aside>
@@ -90,7 +90,7 @@
                 <h1 id="panel-title" class="text-xl font-semibold capitalize">Overview Panel</h1>
                 
                 <div class="flex items-center gap-2 bg-[#161925] border border-gray-800 px-3 py-1.5 rounded-lg text-xs">
-                    <span class="text-gray-400">API Key:</span>
+                    <span class="text-gray-400">API Access Token:</span>
                     <code id="api-key-text" class="bg-black/30 px-1.5 py-0.5 rounded text-amber-300 font-mono">••••••••••••••••</code>
                     <button onclick="toggleApiKey()" class="text-gray-400 hover:text-white ml-1 underline cursor-pointer">Reveal</button>
                 </div>
@@ -100,8 +100,8 @@
                 
                 <div id="view-overview" class="tab-view space-y-6">
                     <div class="bg-[#161925] p-6 rounded-xl border border-gray-800">
-                        <h2 class="text-lg font-semibold text-white mb-2">Live Cloud Project Status</h2>
-                        <p class="text-sm text-gray-400">Real-time health telemetry from your active Node.js server engine instances.</p>
+                        <h2 class="text-lg font-semibold text-white mb-2">Live Cloud Instance Status</h2>
+                        <p class="text-sm text-gray-400">Real-time usage analytics streaming directly from your running cluster configuration context.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -128,15 +128,15 @@
                 <div id="view-database" class="tab-view hidden space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
-                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Reads</p>
-                            <p class="text-2xl font-bold text-white mt-1">1.2M <span class="text-xs text-emerald-400 font-normal">/ 5M free</span></p>
+                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Account Reads</p>
+                            <p class="text-2xl font-bold text-white mt-1">Live <span class="text-xs text-emerald-400 font-normal">/ Multi-Tenant Isolated</span></p>
                         </div>
                         <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
-                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Writes</p>
-                            <p class="text-2xl font-bold text-white mt-1">432,891</p>
+                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Account Writes</p>
+                            <p class="text-2xl font-bold text-white mt-1">Validated</p>
                         </div>
                         <div class="bg-[#161925] p-5 rounded-xl border border-gray-800">
-                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Storage Used</p>
+                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Private Scopes</p>
                             <p id="stat-db-permanence" class="text-2xl font-bold text-white mt-1">0 records</p>
                         </div>
                     </div>
@@ -144,7 +144,7 @@
                     <div class="bg-[#161925] rounded-xl border border-gray-800 overflow-hidden">
                         <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#1c1f2f]">
                             <div class="flex items-center gap-3">
-                                <span class="text-sm font-semibold text-gray-300">Collection:</span>
+                                <span class="text-sm font-semibold text-gray-300">Target Collection:</span>
                                 <select class="bg-[#0f111a] border border-gray-700 rounded px-2 py-1 text-xs text-orange-400 font-mono">
                                     <option>users_profile</option>
                                     <option>posts</option>
@@ -156,9 +156,9 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-[#0f111a] text-gray-400 border-b border-gray-800">
-                                        <th class="p-3 border-r border-gray-800">id (UUID)</th>
-                                        <th class="p-3 border-r border-gray-800">username (string)</th>
-                                        <th class="p-3 border-r border-gray-800">is_premium (boolean)</th>
+                                        <th class="p-3 border-r border-gray-800">Document Object ID</th>
+                                        <th class="p-3 border-r border-gray-800">Field: Username (string)</th>
+                                        <th class="p-3 border-r border-gray-800">Field: Is_Premium (boolean)</th>
                                     </tr>
                                 </thead>
                                 <tbody id="database-table-body" class="text-gray-300 divide-y divide-gray-800"></tbody>
@@ -170,8 +170,8 @@
                 <div id="view-storage" class="tab-view hidden space-y-6">
                     <div class="bg-[#161925] p-6 rounded-xl border border-gray-800 flex justify-between items-center">
                         <div>
-                            <h2 class="text-lg font-semibold text-white mb-1">File Storage Buckets</h2>
-                            <p class="text-sm text-gray-400">Upload, analyze, and manage file system binary content structures.</p>
+                            <h2 class="text-lg font-semibold text-white mb-1">Your File Storage Bucket</h2>
+                            <p class="text-sm text-gray-400">Secure binary chunk streaming pipeline. Uploads are strictly mapped to your account token identifier context.</p>
                         </div>
                         <div>
                             <input type="file" id="real-file-picker" onchange="handleRealFileUpload(this)" class="hidden">
@@ -186,10 +186,10 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-[#0f111a] text-gray-400 border-b border-gray-800">
-                                        <th class="p-3 border-r border-gray-800">File ID</th>
-                                        <th class="p-3 border-r border-gray-800">File Name</th>
-                                        <th class="p-3 border-r border-gray-800">Content Type</th>
-                                        <th class="p-3 border-r border-gray-800">Size</th>
+                                        <th class="p-3 border-r border-gray-800">Asset File ID</th>
+                                        <th class="p-3 border-r border-gray-800">Linked Object Target Name</th>
+                                        <th class="p-3 border-r border-gray-800">MIME Content Type</th>
+                                        <th class="p-3 border-r border-gray-800">Size Tracking Meta</th>
                                         <th class="p-3 text-center">Actions</th>
                                     </tr>
                                 </thead>
