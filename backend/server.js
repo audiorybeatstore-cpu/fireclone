@@ -10,8 +10,8 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security JWT Token Secret Key Phrase
-const JWT_SECRET = process.env.JWT_SECRET || "fireclone_super_crypto_secret_key_99x!";
+// Force it to use this exact string regardless of Render's dashboard settings
+const JWT_SECRET = "fireclone_super_crypto_secret_key_99x!";
 
 // Permanent Cloud Mongo Cluster URI Connection
 const MONGO_URI = "mongodb+srv://fireclone:ZahraIsmael20!@fireclone.d0a3uou.mongodb.net/?appName=Fireclone";
