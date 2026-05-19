@@ -130,7 +130,7 @@ app.get('/api/v1/analytics', async (req, res) => {
 });
 
 // --- SECURED DATABASE ROUTES (Added authenticateToken) ---
-app.get('/api/v1/database/:collection', authenticateToken, async (req, res) => {
+app.get('/api/v1/database/:collection', async (req, res) => {
     try {
         const records = await DataRow.find({ collectionName: req.params.collection });
         res.json(records.map(rec => ({ id: rec._id, username: rec.username, is_premium: rec.is_premium })));
@@ -139,7 +139,7 @@ app.get('/api/v1/database/:collection', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/v1/database/:collection', authenticateToken, async (req, res) => {
+app.post('/api/v1/database/:collection', async (req, res) => {
     try {
         const newRecord = new DataRow({
             collectionName: req.params.collection, username: req.body.username, is_premium: req.body.is_premium
