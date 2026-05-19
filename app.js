@@ -15,6 +15,79 @@ function toggleApiKey() {
     }
 }
 
+// Helper to inject our token into all protected HTTP requests automatically
+function getAuthHeaders(contentType = 'application/json') {
+    const token = localStorage.getItem('fc_admin_token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    if (contentType && contentType !== 'multipart/form-data') {
+        headers['Content-Type'] = contentType;
+    }
+    return headers;
+}
+
+// --- SECURE SYSTEM AUTH CONTROL PIPELINES ---
+async function executeAdminRegistration() {
+    const userPrompt = prompt("Define a master username credentials admin account name:");
+    if (!userPrompt) return;
+    const passPrompt = prompt("Define a strong operational access password token:");
+    if (!passPrompt) return;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/v1/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: userPrompt, password: passPrompt })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        alert("Success! System Admin baseline registered. Log in now.");
+    } catch (err) {
+        alert(`Setup crash error event: ${err.message}`);
+    }
+}
+
+async function executeLoginRequest() {
+    const userInp = document.getElementById('auth-username').value;
+    const passInp = document.getElementById('auth-password').value;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: userInp, password: passInp })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        // Store secure session signature token on user machine browser context
+        localStorage.setItem('fc_admin_token', data.token);
+        localStorage.setItem('fc_admin_user', userInp);
+        
+        initializeWorkspaceSession();
+    } catch (err) {
+        alert(`Access Denied: ${err.message}`);
+    }
+}
+
+function initializeWorkspaceSession() {
+    const token = localStorage.getItem('fc_admin_token');
+    if (!token) return;
+
+    // Remove locking panels and grant control interfaces to screen nodes
+    document.getElementById('auth-gateway-screen').classList.add('hidden');
+    const wrap = document.getElementById('app-workspace-container');
+    wrap.classList.remove('opacity-20', 'pointer-events-none');
+    
+    document.getElementById('display-user-profile').innerText = localStorage.getItem('fc_admin_user') || 'Admin';
+    switchTab('overview');
+}
+
+function executeLogoutWorkflow() {
+    localStorage.removeItem('fc_admin_token');
+    localStorage.removeItem('fc_admin_user');
+    window.location.reload();
+}
+
 // --- ANALYTICS CODE ---
 async function loadProjectAnalytics() {
     try {
@@ -22,6 +95,9 @@ async function loadProjectAnalytics() {
         const stats = await response.json();
         document.getElementById('stat-requests').innerText = stats.totalRequests;
         document.getElementById('stat-uptime').innerText = stats.uptime;
+        
+        const dbPerm = document.getElementById('stat-db-permanence');
+        if(dbPerm) dbPerm.innerText = stats.databaseSize || "0 records";
     } catch (error) {
         console.error("Analytics sync error:", error);
     }
@@ -31,10 +107,18 @@ async function loadProjectAnalytics() {
 async function loadCollectionData(collectionName) {
     const tbody = document.getElementById('database-table-body');
     if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500 animate-pulse">Loading data from Node.js engine...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500 animate-pulse">Loading authenticated records...</td></tr>`;
 
     try {
-        const response = await fetch(`${BACKEND_URL}/api/v1/database/${collectionName}`);
+        const response = await fetch(`${BACKEND_URL}/api/v1/database/${collectionName}`, {
+            headers: getAuthHeaders()
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            executeLogoutWorkflow();
+            return;
+        }
+
         const data = await response.json();
         tbody.innerHTML = '';
         
@@ -46,9 +130,7 @@ async function loadCollectionData(collectionName) {
         data.forEach(row => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-[#1e2235]/40 border-b border-gray-800";
-            
             const displayId = row.id || row._id || "N/A";
-            
             tr.innerHTML = `
                 <td class="p-3 border-r border-gray-800 text-gray-500">${displayId}</td>
                 <td class="p-3 border-r border-gray-800 text-emerald-400">"${row.username || 'N/A'}"</td>
@@ -57,8 +139,7 @@ async function loadCollectionData(collectionName) {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error("Error displaying table collections:", error);
-        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">Error connecting to backend server.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-red-400">Error connecting to secured database.</td></tr>`;
     }
 }
 
@@ -71,31 +152,25 @@ async function addNewRow() {
     try {
         const response = await fetch(`${BACKEND_URL}/api/v1/database/${currentCollection}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ username: randomUsername, is_premium: randomPremium })
         });
         
-        if (!response.ok) {
-            const errorResult = await response.json();
-            alert(`Server Error: ${errorResult.error || "Failed to save record"}`);
-            return;
-        }
-        
+        if (!response.ok) throw new Error("Failed validation transaction payload");
         loadCollectionData(currentCollection);
     } catch (error) {
-        console.error("Add row network failure:", error);
-        alert("Failed to add data to backend. Check network connectivity.");
+        alert("Security operation rejection event logged.");
     }
 }
 
-// --- REAL STORAGE COMPONENT OPERATIONS ---
+// --- STORAGE OPERATIONS ---
 async function loadStorageData() {
     const tbody = document.getElementById('storage-table-body');
     if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-500 animate-pulse">Scanning cloud storage layers...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-500 animate-pulse">Scanning secure storage layer...</td></tr>`;
 
     try {
-        const response = await fetch(`${BACKEND_URL}/api/v1/storage`);
+        const response = await fetch(`${BACKEND_URL}/api/v1/storage`, { headers: getAuthHeaders() });
         const files = await response.json();
         tbody.innerHTML = '';
 
@@ -122,7 +197,7 @@ async function loadStorageData() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-red-400">Failed to pull bucket objects.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-red-400">Failed to pull bucket objects safely.</td></tr>`;
     }
 }
 
@@ -131,7 +206,7 @@ async function handleRealFileUpload(inputElement) {
     if (!file) return;
 
     const tbody = document.getElementById('storage-table-body');
-    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-orange-400 animate-pulse">Uploading binary blocks directly to Render engine...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-orange-400 animate-pulse">Streaming verified blocks to server engine...</td></tr>`;
 
     const formData = new FormData();
     formData.append('fileAsset', file);
@@ -139,32 +214,29 @@ async function handleRealFileUpload(inputElement) {
     try {
         const response = await fetch(`${BACKEND_URL}/api/v1/storage/upload`, {
             method: 'POST',
+            headers: getAuthHeaders('multipart/form-data'),
             body: formData
         });
 
-        if (!response.ok) {
-            alert("Upload failed at server layer.");
-        }
-        
+        if (!response.ok) throw new Error();
         inputElement.value = '';
         loadStorageData();
     } catch (error) {
-        console.error("File upload crash:", error);
-        alert("Network file transmission dropped.");
+        alert("Upload transmission dropped by firewall policies.");
         loadStorageData();
     }
 }
 
 async function deleteStorageFile(id) {
     try {
-        await fetch(`${BACKEND_URL}/api/v1/storage/${id}`, { method: 'DELETE' });
+        await fetch(`${BACKEND_URL}/api/v1/storage/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
         loadStorageData();
     } catch (error) {
-        alert("Deletion payload drop error.");
+        alert("Deletion authentication reject.");
     }
 }
 
-// --- WORKSPACE TAB NAVIGATION TABS ---
+// --- WORKSPACE NAVIGATION TABS ---
 function switchTab(tabId) {
     document.getElementById('panel-title').innerText = tabId + " Panel";
     
@@ -203,5 +275,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (addRowBtn) addRowBtn.setAttribute('onclick', 'addNewRow()');
 
     loadProjectAnalytics();
-    loadCollectionData('users_profile');
+
+    // Check if user has an existing active session on boot load
+    if (localStorage.getItem('fc_admin_token')) {
+        initializeWorkspaceSession();
+    }
 });
